@@ -1,0 +1,242 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  fullName        String?
+  avatarUrl       String?
+  level           Int       @default(1)
+  coolPoints      Int       @default(0)
+  totalCo2Saved   Float     @default(0)
+  sustainabilityScore Int   @default(0)
+  organizationId  String?
+  role            String    @default("user") // Added role field with default value
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  actions         Action[]
+  userChallenges  UserChallenge[]
+  userOffsets     UserOffset[]
+  achievements    UserAchievement[]
+  energyUsage     EnergyUsage[]
+  appliances      Appliance[]
+  badges          UserBadge[]
+  communityPosts  CommunityPost[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Action {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  category    String    // travel, energy, food, waste, shopping
+  actionType  String
+  fromOption  String
+  toOption    String
+  quantity    Float
+  co2Saved    Float
+  pointsEarned Int
+  datePerformed DateTime @default(now())
+  createdAt   DateTime  @default(now())
+}
+
+model Organization {
+  id              String    @id @default(uuid())
+  name            String
+  logoUrl         String?
+  totalCo2Saved   Float     @default(0)
+  totalCoolPoints Int       @default(0)
+  targetCo2       Float?
+  targetDeadline  DateTime?
+  users           User[]
+  createdAt       DateTime  @default(now())
+}
+
+model Challenge {
+  id            String    @id @default(uuid())
+  title         String
+  description   String
+  category      String
+  startDate     DateTime
+  endDate       DateTime
+  targetValue   Float
+  rewardPoints  Int
+  imageUrl      String?
+  userChallenges UserChallenge[]
+  createdAt     DateTime  @default(now())
+}
+
+model UserChallenge {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  progress    Float     @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model OffsetProject {
+  id                  String    @id @default(uuid())
+  name                String
+  description         String
+  projectType         String    // solar, wind, reforestation, clean_cooking
+  location            String
+  capacity            String
+  verificationStandard String
+  pricePerTon         Float
+  imageUrl            String?
+  ucrId              String?
+  userOffsets        UserOffset[]
+  createdAt           DateTime  @default(now())
+}
+
+model UserOffset {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  projectId     String
+  project       OffsetProject @relation(fields: [projectId], references: [id])
+  amountTons    Float
+  amountPaid    Float
+  transactionId String?
+  offsetDate    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+}
+
+model EmissionFactor {
+  id          String    @id @default(uuid())
+  category    String
+  subcategory String
+  unit        String
+  co2PerUnit  Float
+  source      String
+  lastUpdated DateTime  @default(now())
+}
+
+model Achievement {
+  id             String    @id @default(uuid())
+  name           String
+  description   String
+  iconUrl       String?
+  criteriaType  String
+  criteriaValue Float
+  pointsReward  Int
+  userAchievements UserAchievement[]
+  createdAt     DateTime  @default(now())
+}
+
+model UserAchievement {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  earnedAt      DateTime  @default(now())
+  
+  @@unique([userId, achievementId])
+}
+
+model EnergyUsage {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  date          DateTime  @default(now())
+  lighting      Float     @default(0) // kWh
+  appliances    Float     @default(0) // kWh
+  heating       Float     @default(0) // kWh
+  cooling       Float     @default(0) // kWh
+  other         Float     @default(0) // kWh
+  totalUsage    Float     // Total kWh
+  cost          Float     @default(0) // Cost in currency
+  carbonEmission Float    @default(0) // kg CO2
+  createdAt     DateTime  @default(now())
+}
+
+model Appliance {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  name            String
+  category        String    // refrigerator, washing_machine, ac, tv, etc.
+  wattage         Float
+  hoursPerDay     Float     @default(0)
+  efficiencyRating String?  // A+, A, B, C, etc.
+  yearPurchased   Int?
+  estimatedCost   Float     @default(0)
+  suggestions     String?   // AI suggestions for replacement
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  iconUrl     String?
+  category    String      // energy_saver, carbon_reducer, eco_warrior, etc.
+  requirement String      // Description of how to earn
+  userBadges  UserBadge[]
+  createdAt   DateTime    @default(now())
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt  DateTime @default(now())
+  
+  @@unique([userId, badgeId])
+}
+
+model CommunityPost {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  content     String
+  category    String   // tip, achievement, question, etc.
+  likes       Int      @default(0)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RenewableEnergy {
+  id                String   @id @default(uuid())
+  userId            String
+  type              String   // solar, wind, hydro
+  capacity          Float    // kW
+  installationCost  Float
+  monthlySavings    Float
+  co2Offset         Float    // kg CO2 per month
+  roi               Float    // Return on investment in years
+  createdAt         DateTime @default(now())
+}
+
+model OptimizationSuggestion {
+  id          String   @id @default(uuid())
+  userId      String
+  category    String   // lighting, appliance, heating, etc.
+  suggestion  String
+  priority    String   // high, medium, low
+  potentialSavings Float // kWh or currency
+  implemented Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}

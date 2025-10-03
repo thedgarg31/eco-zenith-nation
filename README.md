@@ -59,6 +59,56 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Express.js (Backend)
+- PostgreSQL (Database with Prisma ORM)
+
+## Authentication System
+
+This project includes a complete authentication system with:
+
+- User registration and login
+- Role-based access control (user/admin)
+- JWT token authentication
+- Protected routes
+- Admin dashboard for user management
+
+### Default Accounts
+
+- Admin: admin@example.com / admin123
+- User: user@example.com / user123
+
+## Backend Setup
+
+To run the backend server:
+
+```sh
+# Navigate to the backend directory
+cd backend
+
+# Install dependencies
+npm install
+
+# Set up the database (make sure PostgreSQL is running)
+npx prisma migrate dev
+
+# Seed the database
+npm run seed
+
+# Start the backend server
+npm run dev
+```
+
+## Frontend Setup
+
+To run the frontend:
+
+```sh
+# From the root directory
+npm install
+
+# Start the development server
+npm run dev
+```
 
 ## How can I deploy this project?
 
